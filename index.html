@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#D54407">
+  <title>Certificate Verification | SRHMUN Heidelberg 2026</title>
+  <meta name="description" content="Verify certificates issued by SRHMUN Heidelberg 2026.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --orange:#D54407; --ink:#202124; --muted:#6b7280; --line:#e7e7e7; --paper:#fff; --bg:#f5f5f4; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--ink); font-family:"DM Sans",Arial,sans-serif; min-height:100vh; }
+    header { background:#fff; border-bottom:1px solid var(--line); }
+    .top { max-width:1080px; margin:auto; padding:19px 24px; display:flex; align-items:center; gap:14px; }
+    .mark { width:43px; height:43px; display:grid; place-items:center; background:var(--orange); color:white; font-weight:700; letter-spacing:-1px; border-radius:8px; font-size:15px; }
+    .brand { line-height:1.25; }
+    .brand strong { display:block; font-size:15px; letter-spacing:.02em; }
+    .brand span { color:var(--muted); font-size:12px; }
+    main { max-width:820px; margin:58px auto; padding:0 22px 60px; }
+    .eyebrow { color:var(--orange); font-weight:700; font-size:11px; letter-spacing:.17em; text-transform:uppercase; }
+    h1 { font:700 clamp(32px,5vw,48px)/1.12 "Playfair Display",Georgia,serif; margin:12px 0 12px; }
+    .intro { color:var(--muted); line-height:1.65; max-width:620px; margin:0 0 30px; }
+    .search { display:flex; gap:10px; background:white; padding:9px; border:1px solid var(--line); border-radius:12px; box-shadow:0 8px 28px #00000008; }
+    .search input { flex:1; min-width:0; border:0; outline:0; padding:12px 13px; font:inherit; font-size:15px; }
+    button { border:0; border-radius:8px; background:var(--orange); color:white; padding:0 22px; font:600 14px "DM Sans",sans-serif; cursor:pointer; }
+    button:hover { background:#b93905; }
+    .hint { color:#858585; font-size:12px; margin:10px 4px 0; }
+    .result { margin-top:25px; }
+    .panel { background:white; border:1px solid var(--line); border-radius:14px; overflow:hidden; }
+    .status { padding:17px 22px; display:flex; align-items:center; gap:12px; border-bottom:1px solid var(--line); }
+    .status.valid { background:#f0f8f2; color:#176b35; }
+    .status.revoked { background:#fff2f0; color:#a52c20; }
+    .status.notfound { background:#f8f8f8; color:#555; }
+    .status strong { font-size:14px; letter-spacing:.03em; }
+    .dot { width:10px; height:10px; border-radius:50%; background:currentColor; }
+    .details { padding:24px 25px 27px; }
+    .details h2 { font:600 24px "Playfair Display",Georgia,serif; margin:0 0 5px; }
+    .sub { color:var(--muted); font-size:13px; margin:0 0 22px; }
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:20px 28px; }
+    .field label { display:block; color:#858585; font-size:10px; font-weight:700; letter-spacing:.12em; margin-bottom:6px; }
+    .field div { font-size:14px; font-weight:600; overflow-wrap:anywhere; }
+    .idline { background:#fafafa; border:1px solid var(--line); border-radius:8px; padding:12px 14px; margin-top:22px; font-size:12px; color:#555; }
+    .idline b { color:#222; letter-spacing:.04em; }
+    .empty { text-align:center; padding:35px 20px; color:var(--muted); }
+    footer { text-align:center; color:#929292; font-size:11px; padding:24px; }
+    @media(max-width:560px) { main{margin:40px auto} .search{flex-direction:column} .search button{padding:14px} .grid{grid-template-columns:1fr;gap:17px} .details{padding:21px} }
+  </style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="mark">MUN</div>
+    <div class="brand"><strong>SRHMUN HEIDELBERG 2026</strong><span>Official certificate verification</span></div>
+  </div>
+</header>
+<main>
+  <div class="eyebrow">Certificate services</div>
+  <h1>Verify a certificate.</h1>
+  <p class="intro">Enter the certificate ID shown on an SRHMUN Heidelberg 2026 certificate, or open this page using its QR code, to check the certificate against our issuance records.</p>
+  <form class="search" id="verifyForm">
+    <input id="certificateId" aria-label="Certificate ID" placeholder="e.g. SRHMUN26-0001" autocomplete="off" required>
+    <button type="submit">Verify certificate</button>
+  </form>
+  <p class="hint">Certificate IDs are printed on the certificate, usually beside the QR code.</p>
+  <section class="result" id="result" aria-live="polite"></section>
+</main>
+<footer>SRHMUN Heidelberg 2026 · Certificate verification portal</footer>
+<script>
+  const params = new URLSearchParams(location.search);
+  const fromUrl = params.get("id");
+  const input = document.getElementById("certificateId");
+  const result = document.getElementById("result");
+
+  function field(label, value) {
+    return `<div class="field"><label>${label}</label><div>${escapeHtml(value || "—")}</div></div>`;
+  }
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
+  async function verify(id) {
+    const clean = id.trim().toUpperCase();
+    if (!clean) return;
+    input.value = clean;
+    const response = await fetch("certificates.json", {cache:"no-store"});
+    const records = await response.json();
+    const cert = records.find(item => String(item.id).toUpperCase() === clean);
+    if (!cert) {
+      result.innerHTML = `<div class="panel"><div class="status notfound"><span class="dot"></span><strong>CERTIFICATE NOT FOUND</strong></div><div class="empty">We could not find a certificate with ID <b>${escapeHtml(clean)}</b> in the SRHMUN Heidelberg 2026 issuance records. Please check the ID or contact the issuing team.</div></div>`;
+      return;
+    }
+    const revoked = String(cert.status).toLowerCase() === "revoked";
+    result.innerHTML = `<div class="panel">
+      <div class="status ${revoked ? "revoked" : "valid"}"><span class="dot"></span><strong>${revoked ? "CERTIFICATE REVOKED" : "CERTIFICATE VERIFIED"}</strong></div>
+      <div class="details">
+        <h2>${escapeHtml(cert.name)}</h2>
+        <p class="sub">${revoked ? "This certificate is recorded as revoked." : "This certificate matches an entry in the official SRHMUN Heidelberg 2026 issuance register."}</p>
+        <div class="grid">
+          ${field("CERTIFICATE TYPE", cert.type)}
+          ${field("EVENT", "SRHMUN Heidelberg 2026")}
+          ${field("DATE OF ISSUE", cert.issueDate)}
+          ${field("ISSUING ORGANISATION", "SRHMUN Heidelberg")}
+          ${field("VALIDITY STATUS", revoked ? "Revoked" : "Valid")}
+        </div>
+        <div class="idline">CERTIFICATE ID&nbsp;&nbsp; <b>${escapeHtml(cert.id)}</b></div>
+      </div>
+    </div>`;
+  }
+  document.getElementById("verifyForm").addEventListener("submit", event => {
+    event.preventDefault();
+    verify(input.value).catch(() => result.textContent = "Unable to load the verification register. Please try again later.");
+  });
+  if (fromUrl) verify(fromUrl).catch(() => result.textContent = "Unable to load the verification register. Please try again later.");
+</script>
+</body>
+</html>
