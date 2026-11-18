@@ -1,9 +1,7 @@
-[
-  {
-    "id": "SRHMUN26-TEST001",
-    "name": "test user",
-    "type": "Participation",
-    "issueDate": "2026-12-25",
-    "status": "valid"
-  }
-]
+{
+  "id": "SRHMUN26-0001",
+  "name": "Kevin Vinodh",
+  "type": "Delegate",
+  "issueDate": "2026-11-22",
+  "status": "valid"
+}
